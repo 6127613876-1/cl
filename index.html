@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+</head>
+<body ng-app="studentApp" ng-controller="studentCtrl">
+  <div>
+    <form ng-submit="addStudent()" name="studentForm">
+      <input type="text" ng-model="student.name" placeholder="Name" required />
+      <input type="number" ng-model="student.age" placeholder="Age" required />
+      <button type="submit" ng-disabled="studentForm.$invalid">Add</button>
+    </form>
+  </div>
+  <div>
+    <ul>
+      <li ng-repeat="stu in students | orderBy:'name'">
+        <span><strong>Na:</strong> <input ng-model="stu.name" /></span><br>
+        <span><strong>Age:</strong> <input ng-model="stu.age" /></span><br>
+        <button ng-click="updateStudent(stu)">Update</button>
+        <button ng-click="deleteStudent(stu._id)">Delete</button>
+        <hr>
+      </li>
+    </ul>
+  </div>
+  <script>
+    const app = angular.module('studentApp', []);
+    app.service('StudentService', function ($http) {
+      const apiUrl = 'http://localhost:5000/api/students';
+      this.getStudents = function () {
+        return $http.get(apiUrl);
+      };
+      this.addStudent = function (student) {
+        return $http.post(apiUrl, student);
+      };
+      this.updateStudent = function (id, student) {
+        return $http.put(`${apiUrl}/${id}`, student);
+      };
+      this.deleteStudent = function (id) {
+        return $http.delete(`${apiUrl}/${id}`);
+      };
+    });
+    app.controller('studentCtrl', function ($scope, StudentService) {
+      $scope.students = [];
+      $scope.student = {};
+      const fetchStudents = () => {
+        StudentService.getStudents().then((res) => {
+          $scope.students = res.data;
+        });
+      };
+
+      fetchStudents();
+      $scope.addStudent = () => {
+        StudentService.addStudent($scope.student).then(() => {
+          $scope.student = {}; 
+          fetchStudents();
+        });
+      };
+      $scope.updateStudent = (stu) => {
+        StudentService.updateStudent(stu._id, stu).then(() => {
+          fetchStudents();
+        });
+      };
+      $scope.deleteStudent = (id) => {
+        StudentService.deleteStudent(id).then(() => {
+          fetchStudents();
+        });
+      };
+    });
+  </script>
+</body>
+</html>
